@@ -248,7 +248,7 @@ _libusb_device_handle = c_void_p
 # typedefs for hotplug
 _libusb_hotplug_callback_handle = c_int
 # return value c_int (1st argument)
-_libusb_hotplug_callback_fn = CFUNCTYPE(c_int, c_void_p, _libusb_device_handle, c_uint, c_void_p)
+_libusb_hotplug_callback_fn = CFUNCTYPE(c_int, c_void_p, _libusb_device_handle, c_uint, py_object)
 
 class _libusb_transfer(Structure):
     pass
@@ -591,7 +591,7 @@ def _setup_prototypes(lib):
     lib.libusb_handle_events.argtypes = [c_void_p]
 
     try:
-        lib.libusb_hotplug_register_callback.argtypes = [c_void_p, c_int, c_int, c_int, c_int, c_int, _libusb_hotplug_callback_fn, c_void_p, POINTER(_libusb_hotplug_callback_handle)]
+        lib.libusb_hotplug_register_callback.argtypes = [c_void_p, c_int, c_int, c_int, c_int, c_int, _libusb_hotplug_callback_fn, py_object, POINTER(_libusb_hotplug_callback_handle)]
     except AttributeError:
         pass
 
@@ -666,11 +666,11 @@ class _HotplugHandle(_objfinalizer.AutoFinalizedObject):
         self.__backend = backend
         # initialize pointer
         handle = _libusb_hotplug_callback_handle()
-        _lib.libusb_hotplug_register_callback(backend.ctx, events, flags, vendor_id, product_id, dev_class, self.__callback, user_data, byref(handle))
+        _lib.libusb_hotplug_register_callback(backend.ctx, events, flags, vendor_id, product_id, dev_class, self.__callback, pointer(py_object(user_data)), byref(handle))
 
     def callback(self, ctx, dev, event, user_data):
         dev = Device(_Device(dev), self.__backend)
-        return self.user_callback(dev, event, user_data)
+        return self.user_callback(dev, event, user_data.contents.value)
 
 class _IsoTransferHandler(_objfinalizer.AutoFinalizedObject):
     def __init__(self, dev_handle, ep, buff, timeout):
