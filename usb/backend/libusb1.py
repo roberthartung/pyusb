@@ -664,13 +664,13 @@ class _HotplugHandle(_objfinalizer.AutoFinalizedObject):
         self.user_callback = user_callback
         self.__callback = _libusb_hotplug_callback_fn(self.callback)
         self.__backend = backend
-        # initialize pointer
+        __user_data = py_object(user_data)
         handle = _libusb_hotplug_callback_handle()
-        _lib.libusb_hotplug_register_callback(backend.ctx, events, flags, vendor_id, product_id, dev_class, self.__callback, pointer(py_object(user_data)), byref(handle))
+        _lib.libusb_hotplug_register_callback(backend.ctx, events, flags, vendor_id, product_id, dev_class, self.__callback, __user_data, byref(handle))
 
     def callback(self, ctx, dev, event, user_data):
         dev = Device(_Device(dev), self.__backend)
-        return self.user_callback(dev, event, user_data.contents.value)
+        return self.user_callback(dev, event, user_data)
 
 class _IsoTransferHandler(_objfinalizer.AutoFinalizedObject):
     def __init__(self, dev_handle, ep, buff, timeout):
