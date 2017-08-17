@@ -60,8 +60,11 @@ class HotplugError(Exception):
     """Base class for exceptions in this module."""
     pass
 
+def _find_library(candidate):
+    return 'libusb-1.0.so'
+
 # For now, we only support libusb1 as a backend!
-backend = libusb1.get_backend()
+backend = libusb1.get_backend(find_library=_find_library)
 if backend == None:
     raise HotplugError("Hotplug support requires libusb1 to be available!")
 
